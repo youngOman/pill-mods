@@ -1,0 +1,9 @@
+{
+  "name": "pill-copy",
+  "version": "0.1.2",
+  "description": "copy-band (yash-gadodia) restyled: a copy icon at the top-right of every block (code, table, list, quote); click to copy.",
+  "author": {
+    "name": "youngOman",
+    "url": "https://github.com/youngOman"
+  }
+}

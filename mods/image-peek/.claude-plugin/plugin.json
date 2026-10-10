@@ -1,0 +1,22 @@
+{
+  "name": "image-peek",
+  "description": "image-view (jarrodwatts) fixed for newer Claude Code: thumbnails of pasted images above the prompt, read from $TMPDIR/clipboard-*.png.",
+  "version": "0.1.0",
+  "author": {
+    "name": "youngOman",
+    "url": "https://github.com/youngOman"
+  },
+  "homepage": "https://github.com/jarrodwatts/claude-image-view",
+  "repository": "https://github.com/jarrodwatts/claude-image-view",
+  "license": "MIT",
+  "keywords": [
+    "images",
+    "paste",
+    "preview",
+    "thumbnails",
+    "mod",
+    "terminal",
+    "claude-code"
+  ],
+  "types": "./types/index.d.ts"
+}

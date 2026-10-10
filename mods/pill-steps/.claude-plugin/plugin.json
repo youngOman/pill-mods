@@ -1,0 +1,10 @@
+{
+  "name": "pill-steps",
+  "version": "0.2.1",
+  "description": "next-steps (hamzafer) restyled: next prompts as Claude-colored pills above the prompt. Press 1-3 in an empty prompt, 0 to dismiss.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "youngOman",
+    "url": "https://github.com/youngOman"
+  }
+}
