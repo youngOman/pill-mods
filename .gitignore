@@ -1,0 +1,5 @@
+# Claude Code 載入 mod 時自動寫入
+.claude-plugin/types/
+tsconfig.json
+.claude/
+.DS_Store
