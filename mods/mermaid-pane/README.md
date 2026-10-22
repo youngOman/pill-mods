@@ -2,7 +2,7 @@
 
 A Claude Code mod that draws mermaid diagrams **right in the conversation**: any ` ```mermaid ` block in Claude's reply is replaced by a picture, so you see the architecture instead of raw `flowchart` text.
 
-- Drawn in the direction you write (LR stays horizontal); navy nodes, light-blue borders, thin gray lines and a transparent background; large text. Chinese labels render correctly.
+- Drawn in the direction you write (LR stays horizontal), scaled to fit the whole diagram in your terminal window so you never scroll. Rounded navy nodes with a soft glow, dashed group frames, transparent background. Chinese labels render correctly.
 - Each picture has two icon buttons at its top-right: download (to ~/Downloads) and copy image (to the clipboard).
 - Rendered once per diagram (cached by content) in about 2 s; shows "Drawing diagram…" while it works.
 - Pictures use the kitty graphics protocol, so you need a terminal that has it (Ghostty, kitty, cmux).

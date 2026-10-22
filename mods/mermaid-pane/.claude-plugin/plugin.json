@@ -1,6 +1,6 @@
 {
   "name": "mermaid-pane",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Draws mermaid blocks in Claude's replies as pictures right in the conversation: navy nodes with light-blue borders on a transparent background, download and copy-image buttons.",
   "author": {
     "name": "youngOman",

@@ -3,30 +3,39 @@ import type { EngineInterface, Register } from 'claude-code'
 import type { Rendered } from '../types'
 
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-const MAX_ROWS = 70
 // 配色對齊深色終端：深藍底、cyan 邊框、淺灰線。
 const THEME = {
   theme: 'base',
   themeVariables: {
     background: 'transparent',
-    primaryColor: '#1E2D4A',
+    primaryColor: '#16243d',
     primaryBorderColor: '#7DD3FC',
     primaryTextColor: '#FFFFFF',
-    secondaryColor: '#1E2D4A',
+    secondaryColor: '#16243d',
     tertiaryColor: 'transparent',
-    lineColor: '#CBD5E1',
-    textColor: '#FFFFFF',
-    edgeLabelBackground: 'transparent',
-    clusterBkg: 'transparent',
-    clusterBorder: '#64748B',
-    titleColor: '#FFFFFF',
+    lineColor: '#94A3B8',
+    textColor: '#F1F5F9',
+    edgeLabelBackground: '#0a0c10',
+    clusterBkg: 'rgba(125,211,252,0.04)',
+    clusterBorder: '#475569',
+    titleColor: '#CBD5E1',
     fontSize: '20px',
     fontFamily: 'PingFang TC, Noto Sans TC, sans-serif',
   },
-  flowchart: { nodeSpacing: 40, rankSpacing: 50, padding: 16, curve: 'basis', htmlLabels: true },
+  flowchart: { nodeSpacing: 40, rankSpacing: 55, padding: 16, curve: 'basis', htmlLabels: true },
+  themeCSS: `
+    .node rect, .node polygon { rx: 12px; ry: 12px; stroke-width: 1.6px; filter: drop-shadow(0 0 8px rgba(125,211,252,0.28)); }
+    .node .label, .nodeLabel { font-weight: 600; }
+    .cluster rect { rx: 16px; ry: 16px; stroke-width: 1.3px; stroke-dasharray: 7 5; }
+    .cluster-label .nodeLabel, .cluster text { fill: #CBD5E1; font-weight: 500; }
+    .edgePath path, .flowchart-link { stroke-width: 1.6px; }
+    .edgeLabel { background-color: #0a0c10; color: #E2E8F0; border-radius: 8px; padding: 2px 8px; }
+    .edgeLabel rect { rx: 8px; ry: 8px; opacity: 1; }
+    marker path { fill: #94A3B8; stroke: #94A3B8; }
+  `,
 }
 // 改樣式時遞增，舊快取的圖才會重畫。
-const STYLE = 'v5'
+const STYLE = 'v6'
 
 // 以 mermaid 原始碼的雜湊為鍵：同一張圖只畫一次。繪圖階段不准寫 $.state，所以只用模組變數。
 const cache = new Map<string, Rendered>()
@@ -213,7 +222,8 @@ export const register: Register = on => {
     }
 
     const { Box, Text, Markdown, Image, Button } = $.ui.resolve(e)
-    const width = Math.max(20, (e.viewport?.columns ?? 100) - 4)
+    const maxCols = Math.max(20, (e.viewport?.columns ?? 100) - 6)
+    const maxRows = Math.max(8, (e.viewport?.rows ?? 40) - 8) // 留給按鈕列、文字與輸入框
 
     return (
       <Box flexDirection="column">
@@ -224,12 +234,9 @@ export const register: Register = on => {
           if (result?.error) return <Text color="red">Mermaid render failed: {result.error}</Text>
           if (!result || result.file === null) return <Text dimColor>⏳ Drawing diagram…</Text>
           const size = result.size ?? { width: 16, height: 9 }
-          let columns = Math.min(width, 170)
-          let rows = Math.round((columns * size.height) / (2 * size.width))
-          if (rows > MAX_ROWS) {
-            rows = MAX_ROWS
-            columns = Math.round((rows * 2 * size.width) / size.height)
-          }
+          // 終端機一格約 1:2：整張圖等比縮到寬、高都放得進視窗，不用滑動
+          const columns = Math.floor(Math.min(maxCols, (maxRows * 2 * size.width) / size.height))
+          const rows = Math.round((columns * size.height) / (2 * size.width))
           const file = result.file
           return (
             <Box flexDirection="column">
