@@ -4,7 +4,7 @@
     "name": "youngOman",
     "url": "https://github.com/youngOman"
   },
-  "description": "Claude Code mods：繁中「下一步」膠囊、每個區塊右上角複製、貼圖縮圖預覽、對話內 mermaid 出圖",
+  "description": "Claude Code mods：繁中「下一步」膠囊、區塊複製、貼圖縮圖預覽、對話內 mermaid 出圖（mermaid-pane 圖片版／mermaid-cards 卡片版）",
   "plugins": [
     {
       "name": "pill-steps",
@@ -29,6 +29,12 @@
       "description": "Draws ```mermaid blocks in Claude's replies as pictures right in the conversation (dark theme, local render via mermaid-cli).",
       "version": "0.1.5",
       "source": "./mods/mermaid-pane"
+    },
+    {
+      "name": "mermaid-cards",
+      "description": "Draws mermaid flowcharts/sequence diagrams as colored text cards in the conversation; vertical by default, colors from the cmux theme.",
+      "version": "0.2.0",
+      "source": "./mods/mermaid-cards"
     }
   ]
 }
