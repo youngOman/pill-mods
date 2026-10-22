@@ -27,7 +27,7 @@
     {
       "name": "mermaid-pane",
       "description": "Draws ```mermaid blocks in Claude's replies as pictures right in the conversation (dark theme, local render via mermaid-cli).",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "source": "./mods/mermaid-pane"
     }
   ]
