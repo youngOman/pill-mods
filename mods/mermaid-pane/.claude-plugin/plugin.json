@@ -1,0 +1,9 @@
+{
+  "name": "mermaid-pane",
+  "version": "0.1.0",
+  "description": "Draws ```mermaid blocks from Claude's replies (and /mermaid <file|code>) as a picture in a side pane, so you can see the whole diagram at a glance.",
+  "author": { "name": "youngOman", "url": "https://github.com/youngOman" },
+  "license": "MIT",
+  "keywords": ["mermaid", "diagram", "pane", "mod", "claude-code"],
+  "types": "./types/index.d.ts"
+}
