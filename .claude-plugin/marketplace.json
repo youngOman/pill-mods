@@ -33,7 +33,7 @@
     {
       "name": "mermaid-cards",
       "description": "Draws mermaid flowcharts/sequence diagrams as colored text cards in the conversation; vertical by default, colors from the cmux theme.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "source": "./mods/mermaid-cards"
     }
   ]

@@ -24,6 +24,8 @@ const TONES = [
   { fg: '#56d4dd', bg: '#1c353c' },
   { fg: '#ff9492', bg: '#392a2f' },
 ]
+// 由小到大的 [節點間距, 框內留白]
+const GROW: [number, number][] = [[4, 1], [6, 1], [8, 1], [10, 1], [12, 1], [14, 1], [18, 1], [22, 1]]
 const NOTE = { fg: '#f7c843', bg: '#373322' }
 
 // vendor 把每個字都當 1 格；全形字後面墊一格佔位，輸出時再拿掉
@@ -81,7 +83,18 @@ export const buildDiagram = (source: string, maxWidth: number): Diagram | null =
       .replace(/^(\s*(?:flowchart|graph))\s+(?:LR|RL)\b/m, '$1 TD')
       .replace(/(-->|-\.->|==>|---|-\.-|===)[ \t]+\|/g, '$1|')
       .replace(WIDE, ch => ch + PAD)
-    art = renderMermaidAscii(cleaned, { useAscii: false, colorMode: 'none', paddingX: 3, paddingY: 1 })
+    const draw = (px: number, bp: number) =>
+      renderMermaidAscii(cleaned, { useAscii: false, colorMode: 'none', paddingX: px, paddingY: 1, boxBorderPadding: bp })
+    art = draw(3, 1)
+    // 流程圖：在放得下的前提下只把節點之間的水平間距逐級加大（框保持緊湊，和原版一樣），讓圖盡量撐滿寬度（不再縮在左邊一小條）
+    if (kind === 'flowchart') {
+      const target = Math.floor(maxWidth * 0.94)
+      for (const [px, bp] of GROW) {
+        const bigger = draw(px, bp)
+        if (Math.max(...bigger.split('\n').map(l => l.length)) > target) break
+        art = bigger
+      }
+    }
   } catch {
     return null
   }

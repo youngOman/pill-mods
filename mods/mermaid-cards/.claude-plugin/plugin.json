@@ -1,6 +1,6 @@
 {
   "name": "mermaid-cards",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "把回覆裡的 mermaid 流程圖／時序圖畫成卡片式圖（配色取自 cmux 主題 GitHub Dark High Contrast，預設垂直排列）",
   "author": {
     "name": "youngOman"
