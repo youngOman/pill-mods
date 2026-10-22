@@ -52,7 +52,7 @@ type Part = { kind: 'text'; text: string } | { kind: 'mermaid'; code: string }
 function split(text: string): Part[] {
   const parts: Part[] = []
   let last = 0
-  for (const m of text.matchAll(/```mermaid[^\n]*\n([\s\S]*?)```/g)) {
+  for (const m of text.matchAll(/^[ \t]*```mermaid[^\n]*\n([\s\S]*?)^[ \t]*```[ \t]*$/gm)) {
     const at = m.index ?? 0
     if (at > last) parts.push({ kind: 'text', text: text.slice(last, at) })
     parts.push({ kind: 'mermaid', code: (m[1] ?? '').trim() })
@@ -100,7 +100,7 @@ async function render($: EngineInterface, key: string, code: string): Promise<Re
 export const register: Register = on => {
   // 助理訊息裡的 ```mermaid 區塊，在對話中直接換成圖片（原文字不顯示）。
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
-    if (e.surface !== 'terminal' || !e.props.text.includes('```mermaid')) return next(e)
+    if (e.surface !== 'terminal' || !/^[ \t]*```mermaid/m.test(e.props.text)) return next(e)
     const parts = split(e.props.text)
     if (!parts.some(p => p.kind === 'mermaid')) return next(e)
 
