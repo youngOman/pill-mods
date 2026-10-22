@@ -3,28 +3,30 @@ import type { EngineInterface, Register } from 'claude-code'
 import type { Rendered } from '../types'
 
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-const MAX_ROWS = 32
+const MAX_ROWS = 70
 // 配色對齊深色終端：深藍底、cyan 邊框、淺灰線。
 const THEME = {
   theme: 'base',
   themeVariables: {
     background: 'transparent',
-    primaryColor: '#1E2D4A',
-    primaryBorderColor: '#7DD3FC',
-    primaryTextColor: '#FFFFFF',
-    secondaryColor: '#1E2D4A',
+    primaryColor: '#1d2a45',
+    primaryBorderColor: '#71b7ff',
+    primaryTextColor: '#f0f3f6',
+    secondaryColor: '#1d2a45',
     tertiaryColor: 'transparent',
-    lineColor: '#CBD5E1',
-    textColor: '#FFFFFF',
-    edgeLabelBackground: 'transparent',
+    lineColor: '#9ea7b3',
+    textColor: '#f0f3f6',
+    edgeLabelBackground: '#0a0c10',
     clusterBkg: 'transparent',
-    clusterBorder: '#64748B',
-    titleColor: '#FFFFFF',
+    clusterBorder: '#4b535d',
+    titleColor: '#f0f3f6',
+    fontSize: '18px',
     fontFamily: 'PingFang TC, Noto Sans TC, sans-serif',
   },
+  flowchart: { nodeSpacing: 50, rankSpacing: 55, padding: 18, curve: 'basis', htmlLabels: true },
 }
 // 改樣式時遞增，舊快取的圖才會重畫。
-const STYLE = 'v2'
+const STYLE = 'v3'
 
 // 以 mermaid 原始碼的雜湊為鍵：同一張圖只畫一次。繪圖階段不准寫 $.state，所以只用模組變數。
 const cache = new Map<string, Rendered>()
@@ -84,7 +86,7 @@ async function render($: EngineInterface, key: string, code: string): Promise<Re
     const size = await $.fs.read(output, { as: 'bytes' }).then(({ base64 }) => pngSize(base64), () => null)
     return { file: output, size }
   }
-  await $.fs.write(input, code)
+  await $.fs.write(input, prepare(code))
   const run = await $.process.run(
     [
       'sh', '-c',
@@ -122,6 +124,56 @@ async function copyImage($: EngineInterface, file: string): Promise<void> {
   void $.ui.toast(exitCode === 0 ? '已複製圖片' : '複製失敗')
 }
 
+// 群組配色（取自 cmux 主題 GitHub Dark High Contrast）：[節點底色, 邊框／文字色]
+const TONES: [string, string][] = [
+  ['#1d2a45', '#71b7ff'],
+  ['#17331f', '#4ae168'],
+  ['#3b2c10', '#f0b72f'],
+  ['#2d2340', '#cb9eff'],
+  ['#143134', '#56d4dd'],
+  ['#3b1d22', '#ff9492'],
+]
+
+/** 流程圖：LR／RL 改垂直；每個 subgraph 一個色調，群組外框同色。其他圖種原樣。 */
+function prepare(code: string): string {
+  const src = code.replace(/^(\s*(?:flowchart|graph))\s+(?:LR|RL)\b/m, '$1 TD')
+  if (!/^\s*(flowchart|graph)\b/m.test(src)) return src
+  const stack: number[] = []
+  const clusters: [string, number][] = []
+  const byTone = new Map<number, Set<string>>()
+  const seen = new Set<string>()
+  for (const raw of src.split('\n')) {
+    const sub = /^\s*subgraph\s+([A-Za-z0-9_]+)/.exec(raw)
+    if (sub) {
+      stack.push(clusters.length)
+      clusters.push([sub[1] as string, clusters.length % TONES.length])
+      continue
+    }
+    if (/^\s*end\s*$/.test(raw)) {
+      stack.pop()
+      continue
+    }
+    const line = raw.replace(/"[^"]*"/g, '""')
+    for (const m of line.matchAll(/(?:^|[\s;&>|-])([A-Za-z_][A-Za-z0-9_]*)\s*(?=\[|\(|\{)/g)) {
+      const id = m[1] as string
+      if (seen.has(id)) continue
+      seen.add(id)
+      const tone = stack.length ? (clusters[stack[stack.length - 1] as number]?.[1] ?? 0) : -1
+      if (!byTone.has(tone)) byTone.set(tone, new Set())
+      byTone.get(tone)?.add(id)
+    }
+  }
+  const out = [src.trimEnd()]
+  TONES.forEach(([bg, fg], t) => out.push(`classDef t${t} fill:${bg},stroke:${fg},color:#f0f3f6,stroke-width:2px`))
+  out.push('classDef plain fill:#1f2630,stroke:#9ea7b3,color:#f0f3f6,stroke-width:2px')
+  for (const [tone, ids] of byTone) out.push(`class ${[...ids].join(',')} ${tone < 0 ? 'plain' : `t${tone}`}`)
+  for (const [id, tone] of clusters) {
+    const fg = (TONES[tone] as [string, string])[1]
+    out.push(`style ${id} fill:transparent,stroke:${fg},stroke-width:1.5px,color:${fg}`)
+  }
+  return out.join('\n')
+}
+
 /** 渲染一張圖（同一張只跑一次）；只能在不會被取消的 hook（turn.complete）裡呼叫。 */
 function ensure($: EngineInterface, code: string): Promise<Rendered> {
   const key = hash(STYLE + code)
@@ -154,7 +206,7 @@ async function kick($: EngineInterface, code: string): Promise<void> {
   if (!spawned.has(key)) {
     spawned.add(key)
     const base = await outDir($)
-    await $.fs.write(`${base}/${key}.mmd`, code)
+    await $.fs.write(`${base}/${key}.mmd`, prepare(code))
     await $.process.run([
       'sh', '-c',
       'M=$(command -v mmdc || echo "npx -y @mermaid-js/mermaid-cli"); ' +
@@ -217,7 +269,7 @@ export const register: Register = on => {
           if (result?.error) return <Text color="red">Mermaid render failed: {result.error}</Text>
           if (!result || result.file === null) return <Text dimColor>⏳ Drawing diagram…</Text>
           const size = result.size ?? { width: 16, height: 9 }
-          let columns = Math.min(width, 120)
+          let columns = Math.min(width, 170)
           let rows = Math.round((columns * size.height) / (2 * size.width))
           if (rows > MAX_ROWS) {
             rows = MAX_ROWS
