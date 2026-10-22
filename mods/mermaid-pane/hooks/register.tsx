@@ -139,7 +139,33 @@ function ensure($: EngineInterface, code: string): Promise<Rendered> {
   return job
 }
 
-/** 繪圖階段只讀：快取沒有就看磁碟上有沒有已畫好的 PNG，不起任何程序。 */
+const spawned = new Set<string>()
+const polls = new Map<string, number>()
+
+/**
+ * 背景啟動渲染（shell 立刻返回，所以不會被引擎取消），再用計時器輪詢重繪。
+ * 這是 turn.complete 之外的保險：舊訊息、重載後、別的 hook 沒畫到的圖都靠它。
+ */
+async function kick($: EngineInterface, code: string): Promise<void> {
+  const key = hash(STYLE + code)
+  const tries = polls.get(key) ?? 0
+  if (tries >= 15) return
+  polls.set(key, tries + 1)
+  if (!spawned.has(key)) {
+    spawned.add(key)
+    const base = await outDir($)
+    await $.fs.write(`${base}/${key}.mmd`, code)
+    await $.process.run([
+      'sh', '-c',
+      'M=$(command -v mmdc || echo "npx -y @mermaid-js/mermaid-cli"); ' +
+        '( PUPPETEER_SKIP_DOWNLOAD=1 nohup $M -q -i "$1" -o "$2" -p "$3" -c "$4" -s 2 -b transparent >"$5" 2>&1 ) >/dev/null 2>&1 &',
+      'sh', `${base}/${key}.mmd`, `${base}/${key}.png`, `${base}/chrome.json`, `${base}/theme.json`, `${base}/${key}.log`,
+    ])
+  }
+  $.clock.after(2000, () => $.ui.invalidate('ui.render'))
+}
+
+/** 繪圖階段只讀：快取沒有就看磁碟上有沒有已畫好的 PNG。 */
 async function lookup($: EngineInterface, code: string): Promise<Rendered | undefined> {
   const key = hash(STYLE + code)
   const hit = cache.get(key)
@@ -176,6 +202,7 @@ export const register: Register = on => {
       if (part.kind !== 'mermaid') continue
       const value = await lookup($, part.code)
       if (value) results[hash(STYLE + part.code)] = value
+      else await kick($, part.code)
     }
 
     const { Box, Text, Markdown, Image, Button } = $.ui.resolve(e)
