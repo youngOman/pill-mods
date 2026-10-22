@@ -26,7 +26,7 @@ const THEME = {
   flowchart: { nodeSpacing: 40, rankSpacing: 50, padding: 16, curve: 'basis', htmlLabels: true },
 }
 // 改樣式時遞增，舊快取的圖才會重畫。
-const STYLE = 'v4'
+const STYLE = 'v5'
 
 // 以 mermaid 原始碼的雜湊為鍵：同一張圖只畫一次。繪圖階段不准寫 $.state，所以只用模組變數。
 const cache = new Map<string, Rendered>()
@@ -124,9 +124,9 @@ async function copyImage($: EngineInterface, file: string): Promise<void> {
   void $.ui.toast(exitCode === 0 ? '已複製圖片' : '複製失敗')
 }
 
-/** 流程圖：LR／RL 改垂直（橫的會被擠小）。其他圖種原樣。 */
+/** 原樣交給 mermaid（方向由寫的人決定，預設橫式 LR）。 */
 function prepare(code: string): string {
-  return code.replace(/^(\s*(?:flowchart|graph))\s+(?:LR|RL)\b/m, '$1 TD')
+  return code
 }
 
 /** 渲染一張圖（同一張只跑一次）；只能在不會被取消的 hook（turn.complete）裡呼叫。 */

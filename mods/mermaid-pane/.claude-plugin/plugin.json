@@ -1,7 +1,7 @@
 {
   "name": "mermaid-pane",
-  "version": "0.2.1",
-  "description": "Draws mermaid blocks in Claude's replies as pictures right in the conversation: vertical, navy nodes with light-blue borders on a transparent background, download and copy-image buttons.",
+  "version": "0.2.2",
+  "description": "Draws mermaid blocks in Claude's replies as pictures right in the conversation: navy nodes with light-blue borders on a transparent background, download and copy-image buttons.",
   "author": {
     "name": "youngOman",
     "url": "https://github.com/youngOman"
