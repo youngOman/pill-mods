@@ -1,4 +1,3 @@
-import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { Rendered } from '../types'
@@ -24,9 +23,9 @@ const THEME = {
   },
 }
 
-// 以 mermaid 原始碼的雜湊為鍵：同一張圖只畫一次，重畫畫面時直接取用。
-const done = atom({ plugin: 'mermaid-pane', key: 'done' } as const, {} as Record<string, Rendered>)
-const started = new Set<string>()
+// 以 mermaid 原始碼的雜湊為鍵：同一張圖只畫一次。繪圖階段不准寫 $.state，所以只用模組變數。
+const cache = new Map<string, Rendered>()
+const inflight = new Map<string, Promise<Rendered>>()
 let dir: string | undefined
 
 /** Width and height from a PNG's IHDR chunk, or null when the bytes aren't a PNG. */
@@ -92,6 +91,9 @@ async function render($: EngineInterface, key: string, code: string): Promise<Re
     ],
     { timeoutMs: 180_000 },
   ).catch(error => ({ exitCode: 1, stdout: '', stderr: String(error) }))
+  if (run.exitCode !== 0) {
+    await $.fs.write(`${base}/${key}.err`, `exit ${run.exitCode}\n${run.stderr}\n${run.stdout}`).catch(() => undefined)
+  }
   if (run.exitCode !== 0) return { file: null, size: null, error: (run.stderr || run.stdout || 'render failed').trim().slice(-200) }
   const size = await $.fs.read(output, { as: 'bytes' }).then(({ base64 }) => pngSize(base64), () => null)
   return { file: output, size }
@@ -124,17 +126,24 @@ export const register: Register = on => {
     const parts = split(e.props.text)
     if (!parts.some(p => p.kind === 'mermaid')) return next(e)
 
-    const results = await read($, done)
-    for (const part of parts) {
-      if (part.kind !== 'mermaid') continue
-      const key = hash(part.code)
-      if (results[key] || started.has(key)) continue
-      started.add(key)
-      void render($, key, part.code).then(async value => {
-        await update($, done, all => ({ ...all, [key]: value }))
-        $.ui.invalidate('ui.render')
-      })
-    }
+    // 畫完才回傳畫面（約 2 秒），第一次繪製就有圖，不靠事後重繪。
+    const results: Record<string, Rendered> = Object.fromEntries(cache)
+    await Promise.all(
+      parts.map(async part => {
+        if (part.kind !== 'mermaid') return
+        const key = hash(part.code)
+        if (results[key]?.file) return
+        let job = inflight.get(key)
+        if (!job) {
+          job = render($, key, part.code)
+          inflight.set(key, job)
+        }
+        const value = await job
+        inflight.delete(key)
+        results[key] = value
+        if (value.file) cache.set(key, value)
+      }),
+    )
 
     const { Box, Text, Markdown, Image, Button } = $.ui.resolve(e)
     const width = Math.max(20, (e.viewport?.columns ?? 100) - 4)
@@ -157,7 +166,7 @@ export const register: Register = on => {
           const file = result.file
           return (
             <Box flexDirection="column">
-              <Box flexDirection="row" justifyContent="flex-end" columnGap={1}>
+              <Box key={`mermaid-actions-${key}`} flexDirection="row" justifyContent="flex-end" columnGap={1}>
                 <Button key={`mermaid-dl-${key}`} variant="primary" label={'\u{F01DA}'} hover={{ bold: true }} onPress={() => void download($, file, key)} />
                 <Button key={`mermaid-cp-${key}`} variant="primary" label={'\u{F018F}'} hover={{ bold: true }} onPress={() => void copyImage($, file)} />
               </Box>
