@@ -359,6 +359,8 @@ export const register: Register = (on) => {
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
     if (disabled) return next(e)
     if (e.surface !== 'terminal') return next(e)
+    // 含 mermaid 區塊的訊息讓路：交給 mermaid-pane 畫成圖（它自己有下載／複製圖片按鈕），否則會被這裡整則畫成文字。
+    if (/^[ \t]*```mermaid/m.test(e.props.text)) return next(e)
     const found = blocksFor(e.props.text)
     if (!found.length) return next(e)
     try {
