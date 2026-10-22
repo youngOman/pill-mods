@@ -1,6 +1,6 @@
 {
   "name": "mermaid-pane",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Draws ```mermaid blocks from Claude's replies (and /mermaid <file|code>) as a picture in a side pane, so you can see the whole diagram at a glance.",
   "author": {
     "name": "youngOman",

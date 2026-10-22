@@ -97,6 +97,26 @@ async function render($: EngineInterface, key: string, code: string): Promise<Re
   return { file: output, size }
 }
 
+/** 存一份到 ~/Downloads（同名不覆蓋，自動加序號），回報最後檔名。 */
+async function download($: EngineInterface, file: string, key: string): Promise<void> {
+  const { stdout, exitCode } = await $.process.run([
+    'sh', '-c',
+    'mkdir -p "$HOME/Downloads"; n="$HOME/Downloads/mermaid-$2.png"; i=1; ' +
+      'while [ -e "$n" ]; do i=$((i+1)); n="$HOME/Downloads/mermaid-$2-$i.png"; done; cp "$1" "$n" && printf %s "$n"',
+    'sh', file, key,
+  ])
+  if (exitCode === 0) void $.ui.toast(`已存到 ${stdout.trim().replace(/^.*\/Downloads\//, '~/Downloads/')}`)
+  else void $.ui.toast('下載失敗')
+}
+
+/** 把圖片放進剪貼簿（macOS），可直接貼到簡報、聊天。 */
+async function copyImage($: EngineInterface, file: string): Promise<void> {
+  const { exitCode } = await $.process.run([
+    'osascript', '-e', `set the clipboard to (read (POSIX file "${file}") as «class PNGf»)`,
+  ])
+  void $.ui.toast(exitCode === 0 ? '已複製圖片' : '複製失敗')
+}
+
 export const register: Register = on => {
   // 助理訊息裡的 ```mermaid 區塊，在對話中直接換成圖片（原文字不顯示）。
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
@@ -116,7 +136,7 @@ export const register: Register = on => {
       })
     }
 
-    const { Box, Text, Markdown, Image } = $.ui.resolve(e)
+    const { Box, Text, Markdown, Image, Button } = $.ui.resolve(e)
     const width = Math.max(20, (e.viewport?.columns ?? 100) - 4)
 
     return (
@@ -134,14 +154,21 @@ export const register: Register = on => {
             rows = MAX_ROWS
             columns = Math.round((rows * 2 * size.width) / size.height)
           }
+          const file = result.file
           return (
-            <Image
-              key={`mermaid-${key}`}
-              source={{ file: result.file, format: 'png' }}
-              columns={Math.max(4, Math.min(255, columns))}
-              rows={Math.max(1, Math.min(255, rows))}
-              alt="mermaid diagram"
-            />
+            <Box flexDirection="column">
+              <Box flexDirection="row" justifyContent="flex-end" columnGap={1}>
+                <Button key={`mermaid-dl-${key}`} variant="primary" label={'\u{F01DA}'} hover={{ bold: true }} onPress={() => void download($, file, key)} />
+                <Button key={`mermaid-cp-${key}`} variant="primary" label={'\u{F018F}'} hover={{ bold: true }} onPress={() => void copyImage($, file)} />
+              </Box>
+              <Image
+                key={`mermaid-${key}`}
+                source={{ file, format: 'png' }}
+                columns={Math.max(4, Math.min(255, columns))}
+                rows={Math.max(1, Math.min(255, rows))}
+                alt="mermaid diagram"
+              />
+            </Box>
           )
         })}
       </Box>
