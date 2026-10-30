@@ -377,11 +377,11 @@ export const register: Register = (on) => {
           {segs.map((s, k) => {
             const i = s.copy === undefined ? -1 : found.findIndex((b) => b.text === s.copy)
             if (i < 0) return <Markdown key={`seg:${id}:${k}`} text={s.md} />
-            // 表格按終端機全寬算欄寬，放進框裡（邊框＋內距＋圖示佔 6 欄）會超寬、整張被折行打散：
-            // 表格不加框，圖示回到上方靠右一列
+            // 表格按終端機全寬算欄寬，左右有邊框／內距就會超寬、整張被折行打散：
+            // 表格只畫上下兩條薄荷綠線（不佔左右欄寬），圖示在上方靠右一列
             if (/^\s*\|/.test(s.md)) {
               return (
-                <Box key={`seg:${id}:${k}`} flexDirection="column">
+                <Box key={`seg:${id}:${k}`} flexDirection="column" borderStyle="round" borderColor={FRAME} borderLeft={false} borderRight={false}>
                   <Box flexDirection="row" justifyContent="flex-end">
                     <Button key={`inline:${id}:${i}`} variant="primary" label={'\u{F018F}'} hover={{ bold: true }} onPress={() => undefined} />
                   </Box>
