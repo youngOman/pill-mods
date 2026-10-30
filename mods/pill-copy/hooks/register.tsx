@@ -17,6 +17,8 @@ const MAX_BLOCKS = 9
 const STASH_KEEP = 60
 const LABEL_WIDTH = 20
 const WA_KEY = 'pill-copy:wa'
+// 複製提示停留的時間：夠看清楚就好，太長會一直擋在右上角
+const TOAST_MS = 900
 
 type Block = { label: string; text: string }
 
@@ -108,6 +110,8 @@ const wrap = (text: string) => (wa ? `\`\`\`\n${text}\n\`\`\`` : text)
 
 const copy = async ($: EngineInterface, block: Block): Promise<void> => {
   const payload = wrap(block.text)
+  // 按下去的瞬間就先跳提示（pbcopy 通常在幾十毫秒內完成），失敗再補一則錯誤
+  $.ui.toast(`✓ 已複製  ${block.label}${wa ? '（WhatsApp 格式）' : ''}`, { timeoutMs: TOAST_MS })
   const r = await $.process
     .run(['pbcopy'], { stdin: payload, timeoutMs: 5000 })
     .catch((err) => {
@@ -115,7 +119,6 @@ const copy = async ($: EngineInterface, block: Block): Promise<void> => {
       return undefined
     })
   if (!r || r.exitCode !== 0) return
-  $.ui.toast(`✓ Copied!  ${block.label}${wa ? '（WhatsApp 格式）' : ''}`, { timeoutMs: 2500 })
 }
 
 // tee appends without a shell, so nothing here is quoted into one. One JSON object per line.
@@ -253,6 +256,8 @@ export const segments = (answer: string): Segment[] => {
 // 圓角膠囊（Nerd Font 的  ）：Claude 橘底、深色字
 const ORANGE = '#D97757'
 const INK = '#1B1B1F'
+// 區塊外框：薄荷綠圓角卡片，讓每段重點跳出來
+const FRAME = '#6EE7B7'
 const short = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s)
 
 export const register: Register = (on) => {
@@ -373,12 +378,14 @@ export const register: Register = (on) => {
             const i = s.copy === undefined ? -1 : found.findIndex((b) => b.text === s.copy)
             if (i < 0) return <Markdown key={`seg:${id}:${k}`} text={s.md} />
             return (
-              <Box key={`seg:${id}:${k}`} flexDirection="column">
-                <Box flexDirection="row" justifyContent="flex-end">
-                  {/* 不要膠囊：只放圖示；primary 會用 Claude 的強調色畫，滑鼠移上去加粗 */}
+              <Box key={`seg:${id}:${k}`} flexDirection="row" borderStyle="round" borderColor={FRAME} paddingX={1}>
+                {/* 圖示跟內容同一列、靠右上角，不獨立佔一列（負邊距會讓它被裁掉，別用） */}
+                <Box flexGrow={1} flexDirection="column">
+                  <Markdown text={s.md} />
+                </Box>
+                <Box flexShrink={0} marginLeft={1} alignSelf="flex-start">
                   <Button key={`inline:${id}:${i}`} variant="primary" label={'\u{F018F}'} hover={{ bold: true }} onPress={() => undefined} />
                 </Box>
-                <Markdown text={s.md} />
               </Box>
             )
           })}
