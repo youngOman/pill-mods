@@ -8,34 +8,35 @@ const THEME = {
   theme: 'base',
   themeVariables: {
     background: 'transparent',
-    primaryColor: '#16243d',
-    primaryBorderColor: '#7DD3FC',
-    primaryTextColor: '#FFFFFF',
-    secondaryColor: '#16243d',
+    primaryColor: '#FDE68A',
+    primaryBorderColor: '#F59E0B',
+    primaryTextColor: '#111827',
+    secondaryColor: '#FDE68A',
     tertiaryColor: 'transparent',
-    lineColor: '#94A3B8',
+    lineColor: '#E2E8F0',
     textColor: '#F1F5F9',
     edgeLabelBackground: '#0a0c10',
-    clusterBkg: 'rgba(125,211,252,0.04)',
-    clusterBorder: '#475569',
+    clusterBkg: 'rgba(255,255,255,0.05)',
+    clusterBorder: '#94A3B8',
     titleColor: '#CBD5E1',
     fontSize: '20px',
     fontFamily: 'PingFang TC, Noto Sans TC, sans-serif',
   },
   flowchart: { nodeSpacing: 40, rankSpacing: 55, padding: 16, curve: 'basis', htmlLabels: true },
   themeCSS: `
-    .node rect, .node polygon { rx: 12px; ry: 12px; stroke-width: 1.6px; filter: drop-shadow(0 0 8px rgba(125,211,252,0.28)); }
-    .node .label, .nodeLabel { font-weight: 600; }
+    .node rect, .node polygon { rx: 12px; ry: 12px; stroke-width: 1.6px; }
+    .node .label, .nodeLabel { font-weight: 600; color: #111827; }
     .cluster rect { rx: 16px; ry: 16px; stroke-width: 1.3px; stroke-dasharray: 7 5; }
-    .cluster-label .nodeLabel, .cluster text { fill: #CBD5E1; font-weight: 500; }
+    .cluster-label .nodeLabel, .cluster text { fill: #F1F5F9; font-weight: 600; }
     .edgePath path, .flowchart-link { stroke-width: 1.6px; }
     .edgeLabel { background-color: #0a0c10; color: #E2E8F0; border-radius: 8px; padding: 2px 8px; }
     .edgeLabel rect { rx: 8px; ry: 8px; opacity: 1; }
-    marker path { fill: #94A3B8; stroke: #94A3B8; }
+    marker path { fill: #E2E8F0; stroke: #E2E8F0; }
+    .node rect, .node polygon, .node path, .node circle, .cluster rect, .label-container, g.node * { filter: none !important; }
   `,
 }
 // 改樣式時遞增，舊快取的圖才會重畫。
-const STYLE = 'v6'
+const STYLE = 'v8'
 
 // 以 mermaid 原始碼的雜湊為鍵：同一張圖只畫一次。繪圖階段不准寫 $.state，所以只用模組變數。
 const cache = new Map<string, Rendered>()
