@@ -231,9 +231,15 @@ export const segments = (answer: string): Segment[] => {
       else cur.body.push(line)
       continue
     }
+    // 表格列的儲存格裡有換行：上一行沒以 | 收尾，這行屬於同一列，不要把表格切斷
+    if (cur?.kind === 'table' && line.trim() && !/^\s*\|/.test(line) && !/\|\s*$/.test(cur.lines[cur.lines.length - 1])) {
+      cur.lines.push(line)
+      cur.body.push(line)
+      continue
+    }
     const kind = open?.[1] ? 'fence'
       : /^\s*>\s?/.test(line) ? 'quote'
-      : /^\s*\|.*\|\s*$/.test(line) ? 'table'
+      : /^\s*\|/.test(line) ? 'table'
       : /^\s*([-*+]|\d+[.)])\s+\S/.test(line) || (cur?.kind === 'list' && /^\s{2,}\S/.test(line)) ? 'list'
       : undefined
     if (kind && cur?.kind === kind) {
