@@ -88,7 +88,12 @@ export const parse = (answer: string): Block[] => {
       quote.push(line.replace(/^\s*>\s?/, ''))
       continue
     }
-    if (/^\s*\|.*\|\s*$/.test(line)) {
+    // 儲存格內的硬換行：上一行沒以 | 收尾，這行接在同一列（與 segments() 一致）
+    if (table.length && line.trim() && !/^\s*\|/.test(line) && !/\|\s*$/.test(table[table.length - 1])) {
+      table.push(line)
+      continue
+    }
+    if (/^\s*\|/.test(line)) {
       if (!table.length) flushQuote()
       table.push(line)
       continue
