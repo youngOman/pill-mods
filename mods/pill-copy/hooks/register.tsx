@@ -392,7 +392,7 @@ export const register: Register = (on) => {
             // 表格只畫上下兩條薄荷綠線（不佔左右欄寬），圖示在上方靠右一列
             if (/^\s*\|/.test(s.md)) {
               return (
-                <Box key={`seg:${id}:${k}`} flexDirection="column" borderStyle="round" borderColor={FRAME} borderLeft={false} borderRight={false}>
+                <Box key={`seg:${id}:${k}`} flexDirection="column" borderStyle="round" borderColor={FRAME}>
                   <Box flexDirection="row" justifyContent="flex-end">
                     <Button key={`inline:${id}:${i}`} variant="primary" label={'\u{F018F}'} hover={{ bold: true }} onPress={() => undefined} />
                   </Box>
